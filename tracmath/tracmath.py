@@ -94,6 +94,9 @@ class TracMathPlugin(Component):
     invalid_commands = ListOption("tracmath", "invalid_commands", INVALID_COMMANDS,
             """Invalid commands forbidden to be used in LaTeX content (mostly for security reasons).""")
 
+    img_height = Option("tracmath", "img_height", "1.4em",
+            """The height of rendered image in CSS form.""")
+
     def __init__(self, *args, **kwargs):
         super(TracMathPlugin, self).__init__(*args, **kwargs)
         self.__template = None
@@ -158,7 +161,7 @@ class TracMathPlugin(Component):
         if errmsg:
             return str(self._show_err(errmsg))
 
-        return self._internal_render(formatter.req, name, content)
+        return self._internal_render(formatter.req, name, content, args)
 
     # IHTMLPreviewRenderer methods
     def get_quality_ratio(self, mimetype):
@@ -195,7 +198,7 @@ class TracMathPlugin(Component):
         return
 
     # Internal implementation
-    def _internal_render(self, req, name, content):
+    def _internal_render(self, req, name, content, render_args=None):
         if not name == 'latex':
             return self._show_err('Unknown macro %s' % (name))
 
@@ -268,7 +271,13 @@ class TracMathPlugin(Component):
             # Touch the file to keep it live in the cache
             os.utime(imgpath, None)
 
-        result = '<img src="%s" alt="%s" />' % (req.href("tracmath", imgname), content)
+        if render_args:
+            height = render_args.get('height', self.img_height)
+        else:
+            height = self.img_height
+        style = 'height: %s; vertical-align: bottom' % height
+        result = '<img src="%s" alt="%s" style="%s"/>' %\
+                    (req.href("tracmath", imgname), content, style)
         if label:
             result = '<a name="%s">(%s)<a/>&nbsp;%s' % (label, label, result)
         return result
