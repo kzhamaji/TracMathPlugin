@@ -155,13 +155,25 @@ class TracMathPlugin(Component):
             If `use_dollars` is enabled in `trac.ini`, then you can also use
             `$[latex formula]$` for inline math or `$$[latex formula]$$` for
             display math.
+
+            `inline` option can be used.
+            {{{
+            This is inline formula [[latex($ y = x^2 $,inline)]].
+            }}}
+            This is inline formula [[latex($ y = x^2 $,inline)]].
             """
     def expand_macro(self, formatter, name, content, args=None):
         errmsg = self._load_config()
         if errmsg:
             return str(self._show_err(errmsg))
 
+        self.log.error(content)
+        content = ','.join([e for e in content.split(',') if e.strip() != 'inline'])
+        self.log.error(content)
         return self._internal_render(formatter.req, name, content, args)
+
+    def is_inline(self, content):
+        return ('inline' in [e.strip() for e in content.split(',')])
 
     # IHTMLPreviewRenderer methods
     def get_quality_ratio(self, mimetype):
