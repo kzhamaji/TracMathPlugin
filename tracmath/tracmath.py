@@ -167,9 +167,7 @@ class TracMathPlugin(Component):
         if errmsg:
             return str(self._show_err(errmsg))
 
-        self.log.error(content)
         content = ','.join([e for e in content.split(',') if e.strip() != 'inline'])
-        self.log.error(content)
         return self._internal_render(formatter.req, name, content, args)
 
     def is_inline(self, content):
