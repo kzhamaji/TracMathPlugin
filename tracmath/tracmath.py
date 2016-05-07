@@ -94,8 +94,11 @@ class TracMathPlugin(Component):
     invalid_commands = ListOption("tracmath", "invalid_commands", INVALID_COMMANDS,
             """Invalid commands forbidden to be used in LaTeX content (mostly for security reasons).""")
 
-    img_height = Option("tracmath", "img_height", "1.4em",
-            """The height of rendered image in CSS form.""")
+    img_height_inline = Option("tracmath", "img_height_inline", "1.5em",
+            """The height of rendered inline image in CSS form.""")
+
+    img_max_width = Option("tracmath", "img_max_width", "",
+            """The max-width of rendered image in CSS form.""")
 
     def __init__(self, *args, **kwargs):
         super(TracMathPlugin, self).__init__(*args, **kwargs)
@@ -166,6 +169,11 @@ class TracMathPlugin(Component):
         errmsg = self._load_config()
         if errmsg:
             return str(self._show_err(errmsg))
+
+	if self.is_inline(content):
+	    if args is None:
+                args = {}
+            args['inline'] = True
 
         content = ','.join([e for e in content.split(',') if e.strip() != 'inline'])
         return self._internal_render(formatter.req, name, content, args)
@@ -281,11 +289,17 @@ class TracMathPlugin(Component):
             # Touch the file to keep it live in the cache
             os.utime(imgpath, None)
 
+	height = ''
         if render_args:
-            height = render_args.get('height', self.img_height)
-        else:
-            height = self.img_height
-        style = 'height: %s; vertical-align: bottom' % height
+            height = render_args.get('height', '')
+            if (not height) and 'inline' in render_args:
+                height = self.img_height_inline
+        if 'inline' in render_args:
+	    style = 'height: %s; vertical-align: bottom' % height
+	else:
+	    style = ''
+            if self.img_max_width:
+                style = 'max-width: %s' % self.img_max_width
         result = '<img src="%s" alt="%s" style="%s"/>' %\
                     (req.href("tracmath", imgname), content, style)
         if label:
